@@ -1,328 +1,207 @@
+// App.tsx
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import { MenuProvider, useMenu } from './MenuContext';
+import MenuItem from './MenuItem';
 
-// Simple data storage
-let menuItems = [
-  { id: '1', name: 'Bruschetta', description: 'Toasted bread with tomatoes', course: 'starters', price: '128.00' },
-  { id: '2', name: 'Grilled Salmon', description: 'Fresh salmon with herbs', course: 'mains', price: '385.00' },
-  { id: '3', name: 'Tiramisu', description: 'Classic Italian dessert', course: 'desserts', price: '160.00' }
-];
+const Stack = createStackNavigator();
 
-// Home Screen
-function HomeScreen({ setCurrentScreen }: any) {
-  const totalItems = menuItems.length;
-  
-  // Calculate averages
-  const averages: any = {};
-  const counts: any = {};
-  
+//////////////////////
+// HOME SCREEN
+//////////////////////
+const HomeScreen = ({ navigation }) => {
+  const { menuItems } = useMenu();
+
+  // Calculate average prices
+  const averages = {};
+  const counts = {};
   menuItems.forEach(item => {
-    if (!counts[item.course]) {
-      counts[item.course] = 0;
-      averages[item.course] = 0;
-    }
-    counts[item.course] += 1;
-    averages[item.course] += parseFloat(item.price);
+    averages[item.course] = (averages[item.course] || 0) + item.price;
+    counts[item.course] = (counts[item.course] || 0) + 1;
   });
-  
-  Object.keys(averages).forEach(course => {
-    averages[course] = (averages[course] / counts[course]).toFixed(2);
-  });
+
+  const avgPrices = Object.keys(averages).map(course => ({
+    course,
+    avg: averages[course] / counts[course],
+  }));
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Christoffel's Kitchen</Text>
-      
-      <View style={styles.summary}>
-        <Text style={styles.summaryText}>Total Items: {totalItems}</Text>
-        <Text style={styles.averageText}>Starters: R{averages.starters || '0.00'}</Text>
-        <Text style={styles.averageText}>Mains: R{averages.mains || '0.00'}</Text>
-        <Text style={styles.averageText}>Desserts: R{averages.desserts || '0.00'}</Text>
-      </View>
+      <Text>Total Menu Items: {menuItems.length}</Text>
 
-      <ScrollView style={styles.list}>
-        {menuItems.map(item => (
-          <View key={item.id} style={styles.menuItem}>
-            <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.itemDescription}>{item.description}</Text>
-            <Text style={styles.itemCourse}>{item.course} - R{item.price}</Text>
-          </View>
-        ))}
-      </ScrollView>
+      {/* Average prices */}
+      {avgPrices.map(a => (
+        <Text key={a.course}>Average {a.course} price: R{a.avg.toFixed(2)}</Text>
+      ))}
 
-      <View style={styles.buttons}>
-        <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('add')}>
-          <Text style={styles.buttonText}>Add Item</Text>
+      {/* Full menu */}
+      <FlatList
+        data={menuItems}
+        renderItem={({ item }) => <MenuItem item={item} />}
+        keyExtractor={item => item.id.toString()}
+      />
+
+      {/* Navigation */}
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AddManage')}>
+          <Text style={styles.buttonText}>Add / Manage Menu</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('filter')}>
-          <Text style={styles.buttonText}>Filter</Text>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Filter')}>
+          <Text style={styles.buttonText}>Filter Menu</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-}
+};
 
-// Add Item Screen
-function AddItemScreen({ setCurrentScreen }: any) {
+//////////////////////
+// ADD & MANAGE SCREEN
+//////////////////////
+const AddManageScreen = ({ navigation }) => {
+  const { menuItems, addMenuItem, removeMenuItem } = useMenu();
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [desc, setDesc] = useState('');
   const [course, setCourse] = useState('starters');
   const [price, setPrice] = useState('');
 
-  const addItem = () => {
-    if (name && description && price) {
-      const newItem = {
-        id: Date.now().toString(),
-        name,
-        description,
-        course,
-        price: parseFloat(price).toFixed(2)
-      };
-      menuItems.push(newItem);
-      setName('');
-      setDescription('');
-      setPrice('');
-      setCurrentScreen('home');
+  const handleAdd = () => {
+    if (!name || !desc || !price) {
+      Alert.alert('Error', 'All fields required');
+      return;
     }
+    addMenuItem({
+      id: Date.now(),
+      name,
+      description: desc,
+      course,
+      price: parseFloat(price),
+    });
+    setName('');
+    setDesc('');
+    setPrice('');
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Add Menu Item</Text>
-
-      <Text style={styles.label}>Dish Name:</Text>
-      <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Enter name" />
-
-      <Text style={styles.label}>Description:</Text>
-      <TextInput style={[styles.input, styles.textArea]} value={description} onChangeText={setDescription} placeholder="Enter description" multiline />
-
-      <Text style={styles.label}>Course:</Text>
-      <View style={styles.courseButtons}>
-        <TouchableOpacity style={[styles.courseBtn, course === 'starters' && styles.activeCourse]} onPress={() => setCourse('starters')}>
-          <Text style={styles.courseBtnText}>Starters</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.courseBtn, course === 'mains' && styles.activeCourse]} onPress={() => setCourse('mains')}>
-          <Text style={styles.courseBtnText}>Mains</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.courseBtn, course === 'desserts' && styles.activeCourse]} onPress={() => setCourse('desserts')}>
-          <Text style={styles.courseBtnText}>Desserts</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.label}>Price (R):</Text>
-      <TextInput style={styles.input} value={price} onChangeText={setPrice} placeholder="0.00" keyboardType="numeric" />
-
-      <View style={styles.buttons}>
-        <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setCurrentScreen('home')}>
-          <Text style={styles.buttonText}>Cancel</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.addButton]} onPress={addItem}>
-          <Text style={styles.buttonText}>Add Item</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  );
-}
-
-// Filter Screen
-// Filter Screen
-function FilterScreen({ setCurrentScreen }: any) {
-  const [selectedCourse, setSelectedCourse] = useState('all');
-  
-  const filteredItems = selectedCourse === 'all' 
-    ? menuItems 
-    : menuItems.filter(item => item.course === selectedCourse);
-
-  return (
     <View style={styles.container}>
-      <Text style={styles.title}>Filter Menu</Text>
+      <Text style={styles.title}>Add / Manage Menu Items</Text>
 
-      <View style={styles.filterButtons}>
-        <TouchableOpacity style={[styles.filterBtn, selectedCourse === 'all' && styles.activeFilter]} onPress={() => setSelectedCourse('all')}>
-          <Text style={styles.filterBtnText}>All</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.filterBtn, selectedCourse === 'starters' && styles.activeFilter]} onPress={() => setSelectedCourse('starters')}>
-          <Text style={styles.filterBtnText}>Starters</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.filterBtn, selectedCourse === 'mains' && styles.activeFilter]} onPress={() => setSelectedCourse('mains')}>
-          <Text style={styles.filterBtnText}>Mains</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.filterBtn, selectedCourse === 'desserts' && styles.activeFilter]} onPress={() => setSelectedCourse('desserts')}>
-          <Text style={styles.filterBtnText}>Desserts</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Add form */}
+      <TextInput style={styles.input} placeholder="Dish Name" value={name} onChangeText={setName} />
+      <TextInput style={styles.input} placeholder="Description" value={desc} onChangeText={setDesc} />
+      <Picker selectedValue={course} onValueChange={setCourse} style={styles.input}>
+        <Picker.Item label="Starters" value="starters" />
+        <Picker.Item label="Mains" value="mains" />
+        <Picker.Item label="Desserts" value="desserts" />
+      </Picker>
+      <TextInput
+        style={styles.input}
+        placeholder="Price (R)"
+        value={price}
+        onChangeText={setPrice}
+        keyboardType="numeric"
+      />
+      <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
+        <Text style={styles.buttonText}>Add to Menu</Text>
+      </TouchableOpacity>
 
-      <Text style={styles.results}>Showing {filteredItems.length} items</Text>
+      {/* List with delete */}
+      <FlatList
+        data={menuItems}
+        renderItem={({ item }) => (
+          <View style={styles.row}>
+            <View>
+              <Text style={styles.itemText}>{item.name}</Text>
+              <Text>{item.course} · R{item.price}</Text>
+            </View>
+            <TouchableOpacity onPress={() => removeMenuItem(item.id)}>
+              <Text style={styles.delete}>×</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        keyExtractor={i => i.id.toString()}
+      />
 
-      <ScrollView style={styles.list}>
-        {filteredItems.map(item => (
-          <MenuItem key={item.id} item={item} />
-        ))}
-      </ScrollView>
-
-      <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('home')}>
-        <Text style={styles.buttonText}>Back to Home</Text>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Text style={styles.buttonText}>Back to Menu</Text>
       </TouchableOpacity>
     </View>
   );
-}
-// Main App
-export default function App() {
-  const [currentScreen, setCurrentScreen] = useState('home');
+};
+
+//////////////////////
+// FILTER SCREEN
+//////////////////////
+const FilterScreen = ({ navigation }) => {
+  const { menuItems } = useMenu();
+  const [filter, setFilter] = useState('all');
+
+  const filtered = filter === 'all' ? menuItems : menuItems.filter(i => i.course === filter);
 
   return (
-    <View style={styles.app}>
-      {currentScreen === 'home' && <HomeScreen setCurrentScreen={setCurrentScreen} />}
-      {currentScreen === 'add' && <AddItemScreen setCurrentScreen={setCurrentScreen} />}
-      {currentScreen === 'filter' && <FilterScreen setCurrentScreen={setCurrentScreen} />}
+    <View style={styles.container}>
+      <Text style={styles.title}>Filter by Course</Text>
+      <View style={styles.buttonRow}>
+        {['all', 'starters', 'mains', 'desserts'].map(c => (
+          <TouchableOpacity
+            key={c}
+            style={[styles.button, filter === c && styles.active]}
+            onPress={() => setFilter(c)}>
+            <Text style={styles.buttonText}>{c.toUpperCase()}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <Text>Showing {filtered.length} items</Text>
+
+      <FlatList
+        data={filtered}
+        renderItem={({ item }) => <MenuItem item={item} />}
+        keyExtractor={item => item.id.toString()}
+      />
+
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Text style={styles.buttonText}>Back to Menu</Text>
+      </TouchableOpacity>
     </View>
+  );
+};
+
+//////////////////////
+// MAIN APP
+//////////////////////
+export default function App() {
+  return (
+    <MenuProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Home">
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="AddManage" component={AddManageScreen} />
+          <Stack.Screen name="Filter" component={FilterScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </MenuProvider>
   );
 }
 
-// Styles
+//////////////////////
+// STYLES
+//////////////////////
 const styles = StyleSheet.create({
-  app: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  container: {
-    flex: 1,
-    padding: 20,
-    paddingTop: 50,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#2c3e50',
-  },
-  summary: {
-    backgroundColor: '#f0f0f0',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  summaryText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  averageText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  list: {
-    flex: 1,
-    marginBottom: 20,
-  },
-  menuItem: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  itemName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-  },
-  itemDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginVertical: 5,
-  },
-  itemCourse: {
-    fontSize: 14,
-    color: '#888',
-  },
-  buttons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  button: {
-    backgroundColor: '#3498db',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  cancelButton: {
-    backgroundColor: '#e74c3c',
-  },
-  addButton: {
-    backgroundColor: '#27ae60',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#2c3e50',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 15,
-  },
-  textArea: {
-    height: 80,
-  },
-  courseButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-  },
-  courseBtn: {
-    flex: 1,
-    padding: 12,
-    backgroundColor: '#ecf0f1',
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 5,
-  },
-  activeCourse: {
-    backgroundColor: '#3498db',
-  },
-  courseBtnText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  filterButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-  },
-  filterBtn: {
-    width: '48%',
-    padding: 12,
-    backgroundColor: '#ecf0f1',
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  activeFilter: {
-    backgroundColor: '#3498db',
-  },
-  filterBtnText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  results: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 15,
-    color: '#666',
-  },
+  container: { flex: 1, padding: 15 },
+  title: { fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 },
+  input: { borderBottomWidth: 1, marginBottom: 10, padding: 8 },
+  buttonRow: { flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10 },
+  button: { backgroundColor: '#007AFF', padding: 10, borderRadius: 5 },
+  active: { backgroundColor: '#004C99' },
+  buttonText: { color: '#fff', fontWeight: 'bold' },
+  addButton: { backgroundColor: '#28a745', padding: 10, borderRadius: 5, marginVertical: 10, alignItems: 'center' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#ccc' },
+  delete: { fontSize: 22, color: 'red', paddingHorizontal: 10 },
+  itemText: { fontWeight: 'bold' },
+  backButton: { backgroundColor: '#555', padding: 10, borderRadius: 5, marginTop: 10, alignItems: 'center' },
 });
+
+     
