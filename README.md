@@ -189,6 +189,35 @@ Developed by Gomolemo Molebogeng Motlhabane (2025)
  License
 This project is for academic and demonstration purposes under the MAST POE 2025 guidelines.
 
+References
+
+Fincher, M. Allrecipes. 20 different types of doughnuts you need to know, 28 July 2020. [online] Available at:
+
+< https://www.allrecipes.com/gallery/types-of-donuts/ >
+
+[Accessed 12 November 2025]
+
+Fincher, M. Allrecipes, 2025. 30 most popular types of cookies. [online] Available at:
+
+< https://www.allrecipes.com/gallery/most-popular-types-of-cookies/ >
+
+[Accessed 12 November 2025]
+
+Lowder, C. Delish. 38 pastry recipes from around the world, 22 September 2022. [online] Available at:
+
+< https://www.delish.com/cooking/recipe-ideas/g41299455/pastry-recipes/ >
+
+[Accessed 12 Novemeber 2025]
+
+WebsturantStore. Types of bread, 11 June 2025. [online] Available at:
+
+< https://www.webstaurantstore.com/article/801/bread-types.html?srsltid=AfmBOoqJo0aGrgTg2r3Ch6_8e_fEfst_LbewiytkSgYnwuF0cECzqww_>
+
+[Accessed 12 Novemeber 2025]
+Yodeck, Drive sales and save time with digital menu. [online] Available at:
+<https://www.yodeck.com/digital-signage/menu-boards/?utm_adgroup=109114865950&utm_term=digital%20food%20menu&utm_campaign=Search:+Restaurants,+Bars+&+Cafes+(Industry)&utm_source=google&utm_medium=cpc&hsa_acc=2746003975&hsa_cam=919108208&hsa_grp=109114865950&hsa_ad=614552335656&hsa_src=g&hsa_tgt=kwd-9738732390&hsa_kw=digital%20food%20menu&hsa_mt=p&hsa_net=google&hsa_ver=3&gad_source=1&gad_campaignid=919108208&gbraid=0AAAAADiiywaoQGu5AidHoTi3-MUhOrPiB&gclid=CjwKCAiA_dDIBhB6EiwAvzc1cBzqQYFOVaqmW7IFgx0AvTAd1XnIF4kVa5fdQT-2mJU-2cHf_zqQ9RoC7GIQAvD_BwE>
+[Accessed 12 November 2025]
+
 
 
 
